@@ -639,9 +639,6 @@ export default {
     async submit () {
       const self = this
       this.ui.isSubmiting = true
-      if (this.form.type === 3) {
-        delete this.form.endDate
-      }
       try {
         const formData = Object.keys(this.form).reduce((formData, key) => {
           if (key === 'listProvinceSn') {

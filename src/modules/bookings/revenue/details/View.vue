@@ -343,8 +343,8 @@ export default {
       }
     },
     async fetchTransactions () {
+      this.ui.isLoading = true
       try {
-        this.ui.isLoading = true
         const { data } = await fetchTransactions(this.filter)
         if (data?.code === repStatus.sussess) {
           this.pagination = data.data.meta

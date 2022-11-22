@@ -174,7 +174,8 @@
                 deviceType: filter.deviceType,
                 startDate: filter.startDate,
                 endDate: filter.endDate,
-                type: filter.type
+                type: filter.type,
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -203,7 +204,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -230,7 +231,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -257,7 +258,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -284,7 +285,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -311,7 +312,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -338,7 +339,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -366,7 +367,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -393,7 +394,7 @@
                 startDate: filter.startDate,
                 endDate: filter.endDate,
                 type: filter.type,
-                provinceSn: `${filter.provinceSn}`
+                provinceSn: `${setData().provinceSn}`
               }
             }"
           >
@@ -426,7 +427,7 @@ import { fetchBookingReports, exportBookingReports, statisticsUserBookingReports
 import { fetchListProvinces } from '@/api/province'
 import { fetchSuggestionsHotels } from '@/api/hotels'
 import { debounce, scrollToTop } from '@/utils/helpers'
-import { region, repStatus, SOURCE_OPTIONS, DEVICE_TYPE_OPTIONS, TIME_TYPE_OPTIONS, STATUS_OPTIONS } from '@/utils/const'
+import { region, repStatus, SOURCE_OPTIONS_FILTERS, DEVICE_TYPE_OPTIONS, TIME_TYPE_OPTIONS, STATUS_OPTIONS } from '@/utils/const'
 const allRegion = region.reduce(function async (preValue, curValue) {
   return preValue.concat(curValue.value)
 }, [])
@@ -448,7 +449,7 @@ export default {
       hotelSelected: '',
       isDisabledExport: false,
       filter: {
-        source: null,
+        source: 0,
         hotelStatus: allHotelStatus,
         deviceType: 0,
         provinceSn: [],
@@ -475,7 +476,7 @@ export default {
         statusOptions: STATUS_OPTIONS,
         deviceTypeOptions: DEVICE_TYPE_OPTIONS,
         timeTypeOptions: TIME_TYPE_OPTIONS,
-        sourceOptions: SOURCE_OPTIONS
+        sourceOptions: SOURCE_OPTIONS_FILTERS
       },
       checkBox: {
         isIndeterminateStatus: false,
@@ -537,6 +538,19 @@ export default {
     }
   },
   methods: {
+    setData () {
+      const formData = { ...this.filter }
+      formData.hotelStatus = JSON.stringify(formData.hotelStatus)
+      formData.provinceSn = JSON.stringify(formData.provinceSn)
+
+      if (JSON.parse(formData.hotelStatus).length === this.ui.statusOptions.length) {
+        formData.hotelStatus = '[]'
+      }
+      if (JSON.parse(formData.provinceSn).length === this.ui.provinceOptions.length) {
+        formData.provinceSn = '[]'
+      }
+      return formData
+    },
     setFixedResponsive () {
       if (window.innerWidth <= 768) {
         this.isFixedLeft = null
@@ -597,17 +611,7 @@ export default {
     async fetchBookingReports () {
       this.ui.bookingReportsLoading = true
       try {
-        if (this.filter.source === 2) {
-          this.filter.originHotel = 2
-        } else {
-          this.filter.originHotel = null
-        }
-        const formData = { ...this.filter }
-        if (formData.source === 2) {
-          delete formData.source
-        }
-        formData.hotelStatus = JSON.stringify(formData.hotelStatus)
-        formData.provinceSn = JSON.stringify(formData.provinceSn)
+        const formData = this.setData()
         const { data } = await fetchBookingReports(formData)
         if (data?.code === repStatus.sussess) {
           this.bookingReports = data.data.bookingReportList
@@ -631,13 +635,9 @@ export default {
       }
     },
     async exportBookingReports () {
+      this.ui.exportLoading = true
       try {
-        this.ui.exportLoading = true
-        const formData = {
-          ...this.filter
-        }
-        formData.hotelStatus = JSON.stringify(formData.hotelStatus)
-        formData.provinceSn = JSON.stringify(formData.provinceSn)
+        const formData = this.setData()
         delete formData.hotelStatus
         delete formData.limit
         delete formData.page

@@ -234,6 +234,7 @@
             type="success"
             plain
             icon="el-icon-download"
+            :loading="ui.isRowExporting"
             @click="handleExportFileRow(scope.row.hotelSn)"
           >
             {{ $t('button.export') }}
@@ -263,7 +264,7 @@ import { debounce, scrollToTop } from '@/utils/helpers'
 import { fetchSuggestionsHotels } from '@/api/hotels'
 import { fetchProvinces } from '@/api/province'
 import UploadFile from '@/components/globals/UploadFile.vue'
-import { repStatus, SOURCE_OPTIONS, STATUS_OPTIONS } from '@/utils/const'
+import { repStatus, SOURCE_OPTIONS_FILTERS, STATUS_OPTIONS } from '@/utils/const'
 
 const timeDebounce = 500
 const allHotelStatus = [3, 4, 5, 6]
@@ -277,17 +278,18 @@ export default {
   data: (vm) => {
     return {
       ui: {
+        isRowExporting: false,
         isLoading: false,
         exportLoading: false,
         hotelsLoading: false,
         provincesLoading: false,
         isImporting: false,
-        sourceOptions: SOURCE_OPTIONS,
+        sourceOptions: SOURCE_OPTIONS_FILTERS,
         hotelStatusOptions: STATUS_OPTIONS
       },
       pagination: {},
       filter: {
-        source: null,
+        source: 0,
         originHotel: 0,
         hotelStatus: allHotelStatus,
         provinceSn: '',
@@ -342,6 +344,16 @@ export default {
     }
   },
   methods: {
+    setData () {
+      const formData = { ...this.filter }
+      formData.hotelStatus = JSON.stringify(formData.hotelStatus)
+
+      if (JSON.parse(formData.hotelStatus).length === this.ui.hotelStatusOptions.length) {
+        formData.hotelStatus = '[]'
+      }
+      formData.provinceSn = `[${formData.provinceSn}]`
+      return formData
+    },
     setFixedResponsive () {
       if (window.innerWidth <= 768) {
         this.isFixedLeft = this.isFixedRight = null
@@ -366,16 +378,7 @@ export default {
     async fetchRevenues () {
       this.ui.isLoading = true
       try {
-        if (this.filter.source === 2) {
-          this.filter.originHotel = 2
-        } else {
-          this.filter.originHotel = null
-        }
-        const formData = { ...this.filter }
-        if (formData.source === 2) {
-          delete formData.source
-        }
-        formData.hotelStatus = JSON.stringify(formData.hotelStatus)
+        const formData = this.setData()
         const { data } = await fetchRevenues(formData)
         if (data?.code === repStatus.sussess) {
           const statistics = data.data.statistics
@@ -417,11 +420,16 @@ export default {
       }
     },
     async handleExportFileRow (hotelSn) {
+      this.ui.isRowExporting = true
       try {
         const params = {
           hotelSn: hotelSn,
           ...this.filter
         }
+        delete params.hotelStatus
+        delete params.provinceSn
+        delete params.limit
+        delete params.page
         const { data } = await exportRevenuesInternal(params)
         if (data?.code === repStatus.sussess) {
           this.$message({
@@ -431,15 +439,14 @@ export default {
         }
       } catch (error) {
         return false
+      } finally {
+        this.ui.isRowExporting = false
       }
     },
     async handleExportFile () {
       this.ui.exportLoading = true
       try {
-        const formData = {
-          ...this.filter
-        }
-        formData.hotelStatus = JSON.stringify(formData.hotelStatus)
+        const formData = this.setData()
         const { data } = await exportRevenues(formData)
         if (data?.code === repStatus.sussess) {
           this.$message({

@@ -118,7 +118,7 @@
             </el-button>
           </el-col>
           <el-col :xs="24" :sm="6" :md="5" :lg="4" :xl="3">
-            <el-button v-if="hasPermission('sabooking', 'pExport')" type="success" icon="el-icon-download" plain  @click="onExport">
+            <el-button v-if="hasPermission('sabooking', 'pExport')" type="success" icon="el-icon-download" plain :loading="ui.isExporting"  @click="onExport">
               {{ $t('button.export') }}
             </el-button>
           </el-col>
@@ -156,11 +156,12 @@
             type="primary"
             :to="{
               name: 'cashFlowReportDetail',
-              params: {
+              query: {
                 sn: scope.row.hotelSn,
                 deviceType: filter.deviceType,
                 startDate: filter.startDate,
-                endDate: filter.endDate
+                endDate: filter.endDate,
+                hotelStatus: `${setData().hotelStatus}`
               }
             }"
           >
@@ -353,6 +354,7 @@
                     type="info"
                     plain
                     size="small"
+                    :loading="ui.isRowExporting"
                     @click="onExportById(scope.row.hotelSn)"
                   >
                     {{ $t('button.export') }}
@@ -384,7 +386,7 @@ import { fetchSuggestionsHotels } from '@/api/hotels'
 import { fetchProvinces } from '@/api/province'
 import { debounce, scrollToTop } from '@/utils/helpers'
 import SaSelectCheck from '@/components/globals/SaSelectCheck.vue'
-import { BOOKING_ORIGIN, repStatus, TIME_TYPE_OPTIONS, SOURCE_OPTIONS, DEVICE_TYPE_OPTIONS, STATUS_OPTIONS } from '@/utils/const'
+import { BOOKING_ORIGIN, repStatus, TIME_TYPE_OPTIONS, SOURCE_OPTIONS_FILTERS, DEVICE_TYPE_OPTIONS, STATUS_OPTIONS } from '@/utils/const'
 
 const timeDebounce = 500
 const timeDebounceSecond = 1000
@@ -399,7 +401,7 @@ export default {
   data () {
     return {
       filter: {
-        source: null,
+        source: 0,
         limit: 10,
         page: 1,
         provinceSn: [],
@@ -418,6 +420,8 @@ export default {
       },
       pagination: {},
       ui: {
+        isExporting: false,
+        isRowExporting: false,
         isTableLoading: false,
         isLoadingHotel: false,
         provinceOptions: [],
@@ -425,7 +429,7 @@ export default {
         timeTypeOptions: TIME_TYPE_OPTIONS,
         statusOptions: STATUS_OPTIONS,
         deviceTypeOptions: DEVICE_TYPE_OPTIONS,
-        sourceOptions: SOURCE_OPTIONS
+        sourceOptions: SOURCE_OPTIONS_FILTERS
       },
       checkBox: {
         checkAllStatus: true,
@@ -459,6 +463,19 @@ export default {
     this.changeFilter()
   },
   methods: {
+    setData () {
+      const formData = { ...this.filter }
+      formData.hotelStatus = JSON.stringify(formData.hotelStatus)
+      formData.provinceSn = JSON.stringify(formData.provinceSn)
+
+      if (JSON.parse(formData.hotelStatus).length === allHotelStatus.length) {
+        formData.hotelStatus = '[]'
+      }
+      if (JSON.parse(formData.provinceSn).length === this.ui.provinceOptions.length) {
+        formData.provinceSn = '[]'
+      }
+      return formData
+    },
     tableCellClassName ({ row }) {
       if (row.haveHotelInviteSn) return 'bg-antique'
       else return ''
@@ -494,18 +511,7 @@ export default {
           this.filter.hotelSn = this.ui.hotel?.sn
         }
 
-        if (this.filter.source === 2) {
-          this.filter.originHotel = 2
-        } else {
-          this.filter.originHotel = null
-        }
-        const params = { ...this.filter }
-        if (params.source === 2) {
-          delete params.source
-        }
-
-        params.hotelStatus = JSON.stringify(params.hotelStatus)
-        params.provinceSn = JSON.stringify(params.provinceSn)
+        const params = this.setData()
         const { data } = await listCashFlow(params)
         if (data?.code === repStatus.sussess) {
           this.data = data.data.cashFlowList
@@ -560,18 +566,18 @@ export default {
       }
     },
     async onExport () {
+      this.ui.isExporting = true
       try {
         if (this.ui.hotel?.status === -1) {
           this.filter.hotelGroupSn = this.ui.hotel?.sn
         } else {
           this.filter.hotelSn = this.ui.hotel?.sn
         }
-        const formData = {
-          ...this.filter
-        }
-        formData.hotelStatus = JSON.stringify(formData.hotelStatus)
-        formData.provinceSn = JSON.stringify(formData.provinceSn)
+        const formData = this.setData()
+        delete formData.limit
+        delete formData.page
         const { data } = await onExportCashFlow(formData)
+
         if (data?.code === repStatus.sussess) {
           this.$message({
             type: 'success',
@@ -580,9 +586,12 @@ export default {
         }
       } catch (error) {
         return false
+      } finally {
+        this.ui.isExporting = false
       }
     },
     async onExportById (id) {
+      this.ui.isRowExporting = true
       try {
         const params = {
           startDate: this.filter.startDate,
@@ -600,6 +609,8 @@ export default {
         }
       } catch (error) {
         return false
+      } finally {
+        this.ui.isRowExporting = false
       }
     },
     handleCheckAllStatus (val) {

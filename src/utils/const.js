@@ -127,6 +127,13 @@ export const STATUS_OPTIONS = [
   { value: 6, key: 'option.suspended' }
 ]
 
+export const SOURCE_OPTIONS_FILTERS = [
+  { value: 0, key: 'option.allSource' },
+  { value: 1, key: 'option.go2joy' },
+  { value: 2, key: 'option.agoda' },
+  { value: 3, key: 'option.momo' }
+]
+
 export const SOURCE_OPTIONS = [
   { value: null, key: 'option.allSource' },
   { value: BOOKING_SOURCE.go2joy, key: 'option.go2joy' },

@@ -171,7 +171,7 @@
 import SaSection from '@/components/globals/SaSection.vue'
 import { fetchUserBookingHotels } from './api'
 import { fetchSuggestionsHotels } from '@/api/hotels'
-import { VIA_OBJECT, repStatus, SOURCE_OPTIONS, DEVICE_TYPE_OPTIONS, TIME_TYPE_OPTIONS } from '@/utils/const'
+import { VIA_OBJECT, repStatus, SOURCE_OPTIONS_FILTERS, DEVICE_TYPE_OPTIONS, TIME_TYPE_OPTIONS } from '@/utils/const'
 import { exportBookingReports } from '../list/api'
 import { debounce } from '@/utils/helpers'
 import PopupCancel from '../popup/cancel'
@@ -202,7 +202,7 @@ export default {
       hotels: [],
       pagination: {},
       filter: {
-        source: null,
+        source: 0,
         deviceType: 0,
         startDate: vm.formatDate(today, false),
         endDate: vm.formatDate(today, false),
@@ -210,7 +210,8 @@ export default {
         type: 1,
         limit: 10,
         page: 1,
-        hotelSn: null
+        hotelSn: null,
+        provinceSn: []
       },
       ui: {
         isLoading: false,
@@ -229,7 +230,7 @@ export default {
           { value: 6, key: 'option.noShow' },
           { value: 7, key: 'option.waitForGo2Joy' }
         ],
-        sourceOptions: SOURCE_OPTIONS,
+        sourceOptions: SOURCE_OPTIONS_FILTERS,
         columns: [
           {
             label: 'bookingId',
@@ -321,14 +322,14 @@ export default {
     }
   },
   created () {
-    this.filter.source = this.$route.query.source !== null ? Number(this.$route.query.source) : null
+    this.filter.source = this.$route.query.source !== null ? Number(this.$route.query.source) : 0
     this.filter.bookingStatus = Number(this.$route.query.bookingStatus) || 0
     this.filter.deviceType = Number(this.$route.query.deviceType) || 0
     this.filter.startDate = this.$route.query.startDate || 0
     this.filter.endDate = this.$route.query.endDate || 0
     this.filter.hotelSn = Number(this.$route.query.hotelSn) || null
     this.filter.type = Number(this.$route.query.type) || 0
-    this.filter.provinceSn = this.$route.query.provinceSn ? `[${this.$route.query.provinceSn}]` : '[]'
+    this.filter.provinceSn = this.$route.query.provinceSn ? `${this.$route.query.provinceSn}` : '[]'
 
     this.ui.isDisabledExport = !this.hasPermission('sabookingreport', 'pExport')
 
@@ -421,16 +422,7 @@ export default {
     async fetchUserBookingHotels () {
       this.ui.isLoading = true
       try {
-        if (this.filter.source === 2) {
-          this.filter.originHotel = 2
-        } else {
-          this.filter.originHotel = null
-        }
-
         const formData = { ...this.filter }
-        if (formData.source === 2) {
-          delete formData.source
-        }
 
         const { data } = await fetchUserBookingHotels(formData)
         if (data?.code === repStatus.sussess) {
@@ -448,10 +440,6 @@ export default {
       try {
         const params = {
           ...this.filter
-        }
-
-        if (params.source === 2) {
-          delete params.source
         }
 
         delete params.page

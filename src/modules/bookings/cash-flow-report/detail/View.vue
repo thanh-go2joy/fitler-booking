@@ -209,8 +209,8 @@
     </el-table>
     <template slot="footer">
       <el-pagination
-        @size-change="onSizeChange"
-        @current-change="onCurrentChange"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
         :page-sizes="[10, 20, 30, 40, 50]"
         :page-size="pagination.perPage"
         :current-page="pagination.currentPage"
@@ -238,10 +238,11 @@ export default {
       filter: {
         limit: 10,
         page: 1,
-        startDate: this.$route.params.startDate,
-        endDate: this.$route.params.endDate,
-        deviceType: Number(this.$route.params.deviceType),
-        hotelSn: null
+        startDate: this.$route.query.startDate,
+        endDate: this.$route.query.endDate,
+        deviceType: Number(this.$route.query.deviceType),
+        hotelSn: null,
+        hotelStatus: []
       },
       pagination: {},
       ui: {
@@ -267,7 +268,8 @@ export default {
     }
   },
   created () {
-    this.filter.hotelSn = Number(this.$route.params.sn) || null
+    this.filter.hotelSn = Number(this.$route.query.sn) || null
+    this.filter.hotelStatus = this.$route.query.hotelStatus ? `${this.$route.query.hotelStatus}` : '[]'
     const params = { limit: 10, justHotel: 1, hotelSn: this.filter.hotelSn }
     this.fetchSuggestionsHotels(params)
     this.changeFilter()
@@ -317,13 +319,15 @@ export default {
         this.ui.isLoadingHotel = false
       }
     },
-    onSizeChange (size) {
-      this.filter.page = 1
-      this.filter.limit = size
-      this.fetchCashFlows()
+    handleSizeChange (value) {
+      this.filter.page = this.pagination.currentPage = 1
+      this.filter.limit = value
+      if (this.filter.page === 1) {
+        this.fetchCashFlows()
+      }
     },
-    onCurrentChange (currentPage) {
-      this.filter.page = currentPage
+    handleCurrentChange (value) {
+      this.filter.page = value
       this.fetchCashFlows()
     },
     indexMethod (index) {
