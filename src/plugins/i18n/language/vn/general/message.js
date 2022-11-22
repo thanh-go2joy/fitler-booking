@@ -1,0 +1,26 @@
+export default {
+  loading: 'Đang tải...',
+  updateSuccess: 'Cập nhật thành công',
+  createSuccess: 'Tạo thành công',
+  addSuccess: 'Thêm thành công',
+  success: 'Thành công!',
+  warning: 'Cảnh báo',
+  exportSuccess: 'Xuất thành công',
+  areYouSure: 'Bạn có chắc?',
+  deleteSuccess: 'Xóa thành công',
+  downloadSuccess: 'Tải xuống thành công',
+  sendSuccess: 'Gửi thành công',
+  requestSuccess: 'Yêu cầu thành công',
+  messageAlert: 'Bạn có chắc?',
+  messageWarning: 'Cảnh báo',
+  saveSuccess: 'Lưu thành công',
+  transferSuccess: 'Chuyển đổi thành công',
+  cancelSuccess: 'Hủy thành công',
+  checkinSuccess: 'Nhận phòng thành công',
+  completeSuccess: 'Hoàn thành thành công',
+  confirmCancelSuccess: 'Xác nhận hủy phòng thành công',
+  confirmNoshowSuccess: 'Xác nhận không nhận phòng thành công',
+  noshowSuccess: 'Không nhận phòng thành công',
+  refundSuccess: 'Hoàn tiền thành công'
+
+}
